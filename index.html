@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sheriff Rota</title>
+    <script type="module" defer>
+        class SheriffRota extends HTMLTableElement
+        {
+            constructor()
+            {
+                super();
+
+                const origin = new Date(2021, 5, 14);
+                const today = new Date()
+                today.setHours(0, 0, 0);
+
+                const head = this.createTHead();
+                const headRow = head.insertRow();
+                const days = [...this.dataset.days];
+                // Sigh, because there is no HTMLTableRowElement.insertHeaderCell
+                headRow.insertAdjacentHTML('beforeend', '<th>&#x1f4c5;</th>');
+                days.forEach(d => headRow.insertAdjacentHTML('beforeend', `<th>${d}</th>`));
+
+                const body = this.createTBody();
+                const sheriffs = [...this.dataset.sheriffs];
+
+                const weekOffset = Math.ceil((((today - origin) / 86400000) + 1) / 7) % sheriffs.length;
+
+                const dateFmt = new Intl.DateTimeFormat("en-NZ", {month: "short", day: "numeric"});
+
+                sheriffs.forEach(_ =>
+                {
+                    const row = body.insertRow();
+                    row.classList.toggle('this-week', weekOffset === (row.sectionRowIndex + 1));
+                    const weekDate = new Date(today.getFullYear(), today.getMonth(), 1 + today.getDate() - today.getDay() + (row.sectionRowIndex - 1) * 7);
+                    row.insertCell().textContent = dateFmt.format(weekDate);
+                    for (let i in days)
+                    {
+                        const cell = row.insertCell();
+                        cell.classList.toggle('today', +i === today.getDay() - 1);
+                        cell.textContent = sheriffs[(+i + row.sectionRowIndex * days.length) % sheriffs.length]
+
+                    }
+                });
+            }
+        }
+
+        customElements.define('sheriff-rota', SheriffRota, {extends: 'table'})
+    </script>
+    <style rel="stylesheet">
+        table
+        {
+            margin: auto;
+            width: min-content;
+            height: min-content;
+            border-spacing: 0;
+        }
+
+        td, th
+        {
+            text-align: center;
+        }
+
+        tbody tr:first-of-type td
+        {
+            border-top: black double 0.125em;
+        }
+
+        tbody tr:last-of-type td
+        {
+            border-bottom: black double 0.125em;
+        }
+
+        td, th
+        {
+            padding: 1em;
+        }
+
+        td:first-of-type
+        {
+            font-style: italic;
+        }
+    </style>
+    <style rel="stylesheet" title="Olive">
+        tr.this-week td
+        {
+            background: olive;
+            color: white;
+        }
+
+        tr.this-week td.today
+        {
+            background: olivedrab;
+        }
+
+        tr.this-week td:first-of-type
+        {
+            background: darkolivegreen;
+            border-radius: 0.5em 0 0 0.5em;
+        }
+
+        tr.this-week td:last-of-type
+        {
+            border-radius: 0 0.5em 0.5em 0;
+        }
+    </style>
+    <style rel="stylesheet alternate" title="Highlight">
+        tr.this-week
+        {
+            background-image: url(highlight.svg);
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+            background-clip: border-box;
+        }
+
+        tr.this-week td.today
+        {
+            background-image: url(circle.svg);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+            background-clip: border-box;
+        }
+    </style>
+</head>
+<body>
+<table is="sheriff-rota" data-days="MTWTF" data-sheriffs="BADPUNS">
+    <caption>Sheriff Rota</caption>
+</table>
+</body>
+</html>
